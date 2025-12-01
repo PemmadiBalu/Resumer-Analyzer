@@ -1,4 +1,7 @@
+
 Flask
-gunicorn
 Flask-Cors
+gunicorn
+PyPDF2
+python-docx
 werkzeug
