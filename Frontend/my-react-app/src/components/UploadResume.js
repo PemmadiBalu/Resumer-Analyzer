@@ -42,7 +42,7 @@ const handleSubmit = async (e) => {
   setError("");
 
   try {
-    const res = await axios.post("http://127.0.0.1:5000/upload", formData);
+    const res = await axios.post("https://resumer-analyzer.onrender.com/upload", formData);
     setResult(res.data); // store scan result
   } catch (err) {
     console.error(err);
