@@ -1,138 +1,121 @@
 
-
 import React, { useState } from "react";
 import axios from "axios";
 import ResultCard from "./ResultCard";
 import "../styles/upload.css";
 
 function UploadResume() {
-  // 🔹 File upload states
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  // 🔹 Feedback states
-  const [rating, setRating] = useState(3); // default rating 3
+  // Feedback
+  const [rating, setRating] = useState(3);
   const [feedbackText, setFeedbackText] = useState("");
 
-  // 🔹 Handle file selection
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-    setResult(null); // clear previous result
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setResult(null);
     setError("");
+
+    if (selectedFile) {
+      document.getElementById("fileName").textContent = selectedFile.name;
+    }
   };
 
-  // 🔹 Handle resume upload and analysis
-  
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!file) {
-    setError("Please select a file to upload.");
-    return;
-  }
+    if (!file) {
+      setError("Please select a file to upload.");
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append("file", file);
- // 🔹 key must be 'resume'
-  formData.append("email", "test@gmail.com"); // optional: user email
+    const formData = new FormData();
+    // Backend expects the key "file"
+    formData.append("file", file);
+    formData.append("email", "test@gmail.com");
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const res = await axios.post("https://resumer-analyzer.onrender.com/upload", formData);
-    setResult(res.data); // store scan result
-  } catch (err) {
-    console.error(err);
-    setError(
-      err.response?.data?.error || "Failed to process the resume. Try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const res = await axios.post("http://localhost:5000/upload", formData);
+      setResult(res.data);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.error || "Failed to process the resume. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // 🔹 Handle feedback submission
   const handleFeedbackSubmit = () => {
-    console.log("Rating:", rating);
-    console.log("Feedback:", feedbackText);
-
-    // Reset feedback
+    alert("Thank you for your feedback!");
     setRating(3);
     setFeedbackText("");
-    alert("Thank you for your feedback!");
   };
 
   return (
     <div className="upload-container">
-      {/* 🔹 TITLE */}
       <h2 className="upload-title">AI Resume Analyzer</h2>
 
-      {/* 🔹 4 Steps Guide */}
       <div className="steps-box">
         <h3>How It Works</h3>
         <ul>
-          <li>1️⃣ Upload your resume in PDF or DOCX format.</li>
-          <li>2️⃣ Our AI extracts skills, experience, projects & education.</li>
-          <li>3️⃣ ATS (Applicant Tracking System) score is calculated.</li>
-          <li>4️⃣ Get job-fit suggestions and improvements instantly.</li>
+          <li>📄 Upload your resume (PDF/DOCX)</li>
+          <li>🤖 AI analyzes skills & ATS compatibility</li>
+          <li>📊 Provides job-fit score</li>
+          <li>🚀 Suggests improvements instantly</li>
         </ul>
       </div>
 
-      {/* 🔹 Upload Form */}
-      
-<form
-  className="upload-form"
-  onSubmit={handleSubmit}
-  encType="multipart/form-data"
->
-  <input
-   type="file"
-   name="file"   // Ensure name is file
-   accept=".pdf,.docx"
-   onChange={handleFileChange}
-  />
+      <form className="upload-form" onSubmit={handleSubmit}>
+        {/* Custom File Input */}
+        <div className="custom-file-box">
+          <input
+            type="file"
+            id="fileUpload"
+            accept=".pdf,.docx"
+            onChange={handleFileChange}
+            hidden
+          />
+          <label htmlFor="fileUpload" className="file-label">
+            Select a Resume File
+          </label>
+          <span id="fileName">No file chosen</span>
+        </div>
 
-
-  <button
-    type="submit"
-    className="upload-btn"
-    disabled={loading}
-    aria-disabled={loading}
-  >
-    {loading ? "Analyzing..." : "Upload & Analyze"}
-  </button>
-</form>
-
+        <button
+          type="submit"
+          className="upload-btn"
+          disabled={loading}
+        >
+          {loading ? "Analyzing..." : "Upload & Analyze"}
+        </button>
+      </form>
 
       {error && <p className="error-msg">{error}</p>}
 
-      {/* 🔹 Show result and feedback only after scan */}
       {result && (
         <>
           <ResultCard data={result} />
 
           <div className="review-box">
             <h3 className="review-title">Your Feedback Matters</h3>
-            <p className="review-text">
-              Rate your experience with our AI Resume Analyzer:
-            </p>
 
-            {/* Slider for rating */}
             <input
               type="range"
               min="1"
               max="5"
-              step="1"
-              className="feedback-slider"
               value={rating}
+              className="feedback-slider"
               onChange={(e) => setRating(Number(e.target.value))}
             />
             <p className="slider-value">Your Rating: {rating} / 5</p>
 
-            {/* Feedback textarea */}
             <textarea
               className="feedback-input"
               placeholder="Write your feedback here..."
@@ -140,7 +123,6 @@ const handleSubmit = async (e) => {
               onChange={(e) => setFeedbackText(e.target.value)}
             ></textarea>
 
-            {/* Submit feedback button */}
             <button
               type="button"
               className="submit-feedback"

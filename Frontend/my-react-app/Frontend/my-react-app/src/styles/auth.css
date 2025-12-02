@@ -1,0 +1,272 @@
+
+/* Full Page Centering */
+.auth-container {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #dfe9f3, #ffffff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Card Style */
+.auth-form {
+  background: #ffffff;
+  width: 100%;
+  max-width: 380px;
+  padding: 35px 30px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Heading */
+.auth-container h2 {
+  margin-bottom: 15px;
+  font-size: 30px;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Inputs */
+.auth-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  font-size: 15px;
+  background: #f8f9fb;
+  transition: all 0.3s ease;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #4b8bff;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(75, 139, 255, 0.2);
+}
+
+/* Button */
+.auth-form button {
+  width: 100%;
+  padding: 12px;
+  background: #4b8bff;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.auth-form button:hover {
+  background: #356fe0;
+}
+
+/* Message */
+.msg {
+  margin-top: 15px;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Small devices */
+@media (max-width: 480px) {
+  .auth-form {
+    padding: 25px 20px;
+  }
+}
+
+
+/* Container for the login/account section */
+.auth-container {
+  max-width: 450px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #f0f8ff; /* light blue background */
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+}
+
+/* Headings */
+.auth-container h2 {
+  color: #0077b6;
+  margin-bottom: 10px;
+}
+
+.auth-container p {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Account details box */
+.account-details {
+  background-color: #ffffff;
+  border: 1px solid #d0e7ff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.account-details h3 {
+  color: #0077b6;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.account-details ul {
+  list-style: none;
+  padding: 0;
+}
+
+.account-details li {
+  padding: 8px 0;
+  border-bottom: 1px solid #e0f0ff;
+  color: #555;
+}
+
+.account-details li:last-child {
+  border-bottom: none;
+}
+
+/* Logout button */
+.auth-container button {
+  background-color: #0077b6;
+  color: #fff;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.auth-container button:hover {
+  background-color: #005f87;
+}
+
+/* Message text */
+.msg {
+  color: green;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+
+/* signup page specific */
+
+/* Full Page Centering */
+.auth-container {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #d0e7ff, #ffffff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Card Style */
+.auth-form {
+  background: #ffffff;
+  width: 100%;
+  max-width: 400px;
+  padding: 35px 30px;
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: scaleUp 0.35s ease;
+}
+
+/* Card animation */
+@keyframes scaleUp {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Heading */
+.auth-container h2 {
+  margin-bottom: 18px;
+  font-size: 32px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+/* Inputs */
+.auth-form input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #dcdcdc;
+  border-radius: 12px;
+  font-size: 15px;
+  background: #f4f7fb;
+  transition: all 0.3s ease;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #4b8bff;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(75, 139, 255, 0.25);
+}
+
+/* Button */
+.auth-form button {
+  width: 100%;
+  padding: 14px;
+  background: #4b8bff;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.auth-form button:hover {
+  background: #2f6ce0;
+  transform: translateY(-2px);
+}
+
+/* Success or Error Message */
+.msg {
+  margin-top: 18px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2c3e50;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .auth-form {
+    padding: 25px 22px;
+  }
+
+  .auth-container h2 {
+    font-size: 28px;
+  }
+}
