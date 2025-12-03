@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "api/*.py": {
+      "runtime": "python3.12"
+    }
+  },
+  "builds": [
+    {
+      "src": "api/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "Front-end/my-app/package.json",
+      "use": "@vercel/static-build"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/app.py" },
+    { "src": "/(.*)", "dest": "Front-end/my-app/build/$1" }
+  ]
+}
