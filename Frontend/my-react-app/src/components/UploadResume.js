@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import axios from "axios";
 import ResultCard from "./ResultCard";
@@ -34,19 +33,30 @@ function UploadResume() {
     }
 
     const formData = new FormData();
-    // Backend expects the key "file"
-    formData.append("file", file);
-    formData.append("email", "test@gmail.com");
+    formData.append("resume", file); // Backend expects 'resume'
+    formData.append("email", "test@gmail.com"); // optional if backend needs it
 
     setLoading(true);
     setError("");
 
     try {
-      const res = await axios.post("https://resumer-analyzer.onrender.com/upload", formData);
-      setResult(res.data);
+      const res = await axios.post(
+        "https://resumer-analyzer.onrender.com/upload",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+
+      if (res.data.success) {
+        setResult(res.data);
+      } else {
+        setError(res.data.message || "Failed to process the resume. Try again.");
+      }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || "Failed to process the resume. Try again.");
+      setError(err.response?.data?.message || "Failed to process the resume. Try again.");
     } finally {
       setLoading(false);
     }
@@ -73,7 +83,6 @@ function UploadResume() {
       </div>
 
       <form className="upload-form" onSubmit={handleSubmit}>
-        {/* Custom File Input */}
         <div className="custom-file-box">
           <input
             type="file"
@@ -88,11 +97,7 @@ function UploadResume() {
           <span id="fileName">No file chosen</span>
         </div>
 
-        <button
-          type="submit"
-          className="upload-btn"
-          disabled={loading}
-        >
+        <button type="submit" className="upload-btn" disabled={loading}>
           {loading ? "Analyzing..." : "Upload & Analyze"}
         </button>
       </form>
