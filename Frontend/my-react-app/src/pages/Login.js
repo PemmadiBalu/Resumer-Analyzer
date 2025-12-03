@@ -15,7 +15,7 @@ function Login() {
       const res = await axios.post(
         "https://resumer-analyzer.onrender.com/login",
         {
-          username: email, // backend expects `username`
+          email, // backend expects `email`
           password,
         },
         {
@@ -27,7 +27,7 @@ function Login() {
       if (res.data.success) {
         setUser({
           name: res.data.username || email,
-          email,
+          email: res.data.email || email,
           lastLogin: new Date().toLocaleString(),
         });
         setMessage("Login successful!");
@@ -35,6 +35,7 @@ function Login() {
         setMessage(res.data.message || "Invalid credentials");
       }
     } catch (err) {
+      console.error(err);
       setMessage(err.response?.data?.message || "Login failed");
     }
   };
@@ -59,7 +60,6 @@ function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-
             <input
               type="password"
               placeholder="Enter Password"
@@ -67,10 +67,8 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
             <button type="submit">Log in</button>
           </form>
-
           {message && <p className="msg">{message}</p>}
         </>
       ) : (
