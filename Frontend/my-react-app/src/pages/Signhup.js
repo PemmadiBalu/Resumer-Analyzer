@@ -14,7 +14,7 @@ function Signup() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://127.0.0.1:5000/api/signup", {
+      const res = await axios.post("https://resumer-analyzer.onrender.com/api/signup", {
         username,
         email,
         password,
