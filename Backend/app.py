@@ -7,7 +7,8 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import PyPDF2
-import docx
+from docx import Document   # Correct import for python-docx
+
 
 # ---------------- App Setup ----------------
 app = Flask(__name__)
@@ -83,7 +84,7 @@ def extract_pdf(path):
 def extract_docx(path):
     text = ""
     try:
-        doc = docx.Document(path)
+        doc = Document(path)
         for p in doc.paragraphs:
             text += p.text + "\n"
     except Exception as e:
