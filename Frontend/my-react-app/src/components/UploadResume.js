@@ -33,11 +33,12 @@ function UploadResume() {
     }
 
     const formData = new FormData();
-    formData.append("resume", file); // Backend expects 'resume'
-    formData.append("email", "test@gmail.com"); // optional if backend needs it
+    formData.append("file", file); // Backend expects 'file'
+    // Optional: formData.append("email", "test@gmail.com");
 
     setLoading(true);
     setError("");
+    setResult(null);
 
     try {
       const res = await axios.post(
@@ -49,14 +50,10 @@ function UploadResume() {
         }
       );
 
-      if (res.data.success) {
-        setResult(res.data);
-      } else {
-        setError(res.data.message || "Failed to process the resume. Try again.");
-      }
+      setResult(res.data); // Flask returns JSON directly
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to process the resume. Try again.");
+      setError(err.response?.data?.error || "Failed to process the resume. Try again.");
     } finally {
       setLoading(false);
     }
