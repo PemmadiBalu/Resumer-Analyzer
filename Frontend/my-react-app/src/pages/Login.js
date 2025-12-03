@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import axios from "axios";
 import "../styles/auth.css";
@@ -13,22 +12,27 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("https://resumer-analyzer.onrender.com/login", {
-        username: email, // backend expects `username`, using email field
-        password,
-      });
+      const res = await axios.post(
+        "https://resumer-analyzer.onrender.com/login",
+        {
+          username: email, // backend expects `username`
+          password,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
 
       if (res.data.success) {
         setUser({
           name: res.data.username || email,
           email,
-          uploadedResumes: res.data.upload_count || 0,
-          skills: res.data.skills || [],
           lastLogin: new Date().toLocaleString(),
         });
         setMessage("Login successful!");
       } else {
-        setMessage(res.data.message);
+        setMessage(res.data.message || "Invalid credentials");
       }
     } catch (err) {
       setMessage(err.response?.data?.message || "Login failed");
