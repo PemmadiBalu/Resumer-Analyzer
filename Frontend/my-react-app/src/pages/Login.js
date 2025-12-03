@@ -13,7 +13,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://127.0.0.1:5000/login", {
+      const res = await axios.post("https://resumer-analyzer.onrender.com/login", {
         username: email, // backend expects `username`, using email field
         password,
       });
