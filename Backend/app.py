@@ -1,4 +1,3 @@
-
 import os
 import sqlite3
 import re
@@ -7,12 +6,11 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import PyPDF2
-from docx import Document   # Correct import for python-docx
-
+from docx import Document  # Correct import for python-docx
 
 # ---------------- App Setup ----------------
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)  # Enable credentials for frontend
 
 UPLOAD_FOLDER = "uploads"
 DB_FILE = "resume_analyzer.db"
@@ -60,7 +58,7 @@ def init_db():
 
 init_db()
 
-# ---------------- Extractors ----------------
+# ---------------- Text Extractors ----------------
 def extract_text(path):
     if path.lower().endswith(".pdf"):
         return extract_pdf(path)
@@ -101,16 +99,11 @@ def extract_phone(text):
     return match.group(0) if match else None
 
 def extract_links(text):
-    # Match URLs even if they start with http/https or www or just linkedin/github
     urls = re.findall(r"(https?://[^\s]+|www\.[^\s]+|linkedin\.com[^\s]+|github\.com[^\s]+)", text, re.IGNORECASE)
-    
     github, linkedin, portfolios = None, None, []
 
     for url in urls:
-        # Clean trailing punctuation
         url = url.rstrip('.,;:()[]')
-        
-        # Add missing schema if needed
         if url.startswith("www."):
             url = "https://" + url
         elif url.startswith("linkedin.com") or url.startswith("github.com"):
@@ -126,23 +119,16 @@ def extract_links(text):
     portfolio = portfolios[0] if portfolios else None
     return github, linkedin, portfolio
 
-
-def portfolio_links(text):
-    _, _, portfolio = extract_links(text)
-    return portfolio if portfolio else "Not Found"
-
 # ---------------- Professional Summary ----------------
 def extract_Professional_Summary(text):
     text_lower = text.lower()
     keywords = ["professional summary", "summary", "profile", "career objective", "objective"]
-
     for keyword in keywords:
         if keyword in text_lower:
             start = text_lower.find(keyword)
             summary = text[start:].split("\n")
             summary = " ".join(summary[1:6]) if len(summary) > 1 else text[:200]
             return summary.strip()
-
     sentences = re.split(r"(?<=[.!?]) +", text)
     fallback_summary = " ".join(sentences[:3]).strip()
     return fallback_summary if fallback_summary else None
@@ -150,13 +136,11 @@ def extract_Professional_Summary(text):
 # ---------------- Education ----------------
 def extract_education(text):
     education_entries = []
-
     degree_keywords = [
         r"B\.?Tech", r"B\.?E", r"M\.?Tech", r"BSc", r"MSc", r"BCA", r"MCA", r"PhD",
         r"Bachelor", r"Master", r"Intermediate", r"SSC", r"HSC", r"High School", r"Secondary School"
     ]
     degree_pattern = "|".join(degree_keywords)
-
     year_pattern = r"(20\d{2}–20\d{2}|20\d{2}|19\d{2})"
     cgpa_pattern = r"CGPA[:\s]?([\d\.]+)"
     institute_keywords = ["Institute", "College", "School", "University"]
@@ -165,49 +149,35 @@ def extract_education(text):
     idx = 0
     while idx < len(lines):
         line = lines[idx].strip()
-
-        # Combine multi-line degree description
         while idx + 1 < len(lines) and not re.search(degree_pattern, lines[idx + 1], re.IGNORECASE) and not any(k in lines[idx + 1] for k in institute_keywords):
             line += " " + lines[idx + 1].strip()
             idx += 1
-
         if re.search(degree_pattern, line, re.IGNORECASE):
             edu_entry = {}
             edu_entry["education"] = line
-
-            # Look at next line for institute, CGPA, year
             next_line = lines[idx + 1].strip() if idx + 1 < len(lines) else ""
-
-            # Split next_line on '|' or '-' to separate institute, CGPA, year
             parts = re.split(r"\||-", next_line)
             institute = parts[0].strip() if len(parts) > 0 else "Not Found"
-
             cgpa, year = "Not Found", "Not Found"
             if len(parts) > 1:
-                # Search for CGPA and year in the remaining part
                 cgpa_match = re.search(cgpa_pattern, parts[1], re.IGNORECASE)
                 year_match = re.search(year_pattern, parts[1])
                 cgpa = cgpa_match.group(1) if cgpa_match else "Not Found"
                 year = year_match.group(0) if year_match else "Not Found"
             else:
-                # fallback: try extracting CGPA and year from whole line
                 cgpa_match = re.search(cgpa_pattern, next_line, re.IGNORECASE)
                 year_match = re.search(year_pattern, next_line)
                 cgpa = cgpa_match.group(1) if cgpa_match else "Not Found"
                 year = year_match.group(0) if year_match else "Not Found"
-
             edu_entry["institution"] = institute
             edu_entry["cgpa"] = cgpa
             edu_entry["year"] = year
-
             education_entries.append(edu_entry)
             idx += 2
         else:
             idx += 1
 
     return education_entries or [{"education": "Not Found", "institution": "Not Found", "cgpa": "Not Found", "year": "Not Found"}]
-
-
 
 # ---------------- Skills & Job Fit ----------------
 def extract_skills(text):
@@ -252,104 +222,6 @@ def calculate_ats_score(text, skills):
     length_score = 10 if 300 <= len(text.split()) <= 800 else 5 if 150 <= len(text.split()) < 300 else 0
     return round(skill_score + contact_score + structure_score + length_score, 2)
 
-# ---------------- Sections ----------------
-def extract_projects(text):
-    projects, lines = [], text.split("\n")
-    project_keywords = ["project", "projects"]
-    section_end_keywords = ["internship", "experience", "education", "certifications", "skills", "achievements", "summary", "profile"]
-    inside_section, current = False, []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-        if any(k in clean_line for k in project_keywords):
-            inside_section = True
-            continue
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current: projects.append(" ".join(current))
-            current, inside_section = [], False
-        if inside_section and clean_line: current.append(line.strip())
-    if current: projects.append(" ".join(current))
-    return [p for p in projects if len(p.split()) > 3] or []
-
-def extract_internships(text):
-    internships, lines = [], text.split("\n")
-    internship_keywords = ["internship", "internships", "work experience", "experience"]
-    section_end_keywords = ["education", "projects", "certifications", "skills", "achievements", "summary", "profile", "objective"]
-    inside_section, current = False, []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-        if any(k in clean_line for k in internship_keywords): inside_section = True; continue
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current: internships.append(" ".join(current))
-            current, inside_section = [], False
-        if inside_section and clean_line: current.append(line.strip())
-    if current: internships.append(" ".join(current))
-    return [i for i in internships if len(i.split()) > 3] or []
-
-def extract_certifications(text):
-    certifications = []
-    lines = text.split("\n")
-
-    # Keywords to detect certification lines
-    cert_keywords = ["certification", "certifications", "course", "courses", "training", "certificate"]
-    # Keywords that usually mark the end of a section
-    section_end_keywords = ["education", "projects", "internships", "skills", 
-                            "achievements", "summary", "experience", "profile", "objective"]
-
-    inside_section = False
-    current_cert = []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-
-        # Start capturing if line has cert keywords
-        if any(k in clean_line for k in cert_keywords):
-            inside_section = True
-            # Include the current line if it seems like a certification entry
-            if len(line.strip().split()) > 2:
-                current_cert.append(line.strip())
-            continue
-
-        # End section if end keyword found
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current_cert:
-                certifications.extend(current_cert)
-            current_cert = []
-            inside_section = False
-
-        # Collect lines if inside section
-        if inside_section:
-            if clean_line and len(clean_line.split()) > 2:
-                current_cert.append(line.strip())
-
-    # Add any remaining certifications
-    if current_cert:
-        certifications.extend(current_cert)
-
-    # Remove duplicates and very short lines
-    certifications = list(dict.fromkeys(certifications))  # preserves order
-    certifications = [c for c in certifications if len(c.split()) > 2]
-
-    return certifications or ["Not Found"]
-
-
-def extract_achievements(text):
-    achievements, lines = [], text.split("\n")
-    ach_keywords = ["achievement", "achievements", "awards", "honors", "recognition"]
-    section_end_keywords = ["education", "projects", "internships", "skills", "certifications", "summary", "experience", "profile", "objective"]
-    inside_section, current = False, []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-        if any(k in clean_line for k in ach_keywords): inside_section = True; continue
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current: achievements.append(" ".join(current))
-            current, inside_section = [], False
-        if inside_section and clean_line: current.append(line.strip())
-    if current: achievements.append(" ".join(current))
-    return [a for a in achievements if len(a.split()) > 3] or []
-
 # ---------------- Upload Route ----------------
 @app.route("/upload", methods=["POST"])
 def upload_resume():
@@ -385,10 +257,10 @@ def upload_resume():
             "professional_summary": professional_summary or "Not Found",
             "education": extract_education(text),
             "technical_skills": skills,
-            "projects": extract_projects(text),
-            "internships": extract_internships(text),
-            "certifications": extract_certifications(text),
-            "achievements": extract_achievements(text),
+            "projects": [],  # You can add project extraction here
+            "internships": [],  # Add internship extraction here
+            "certifications": [],  # Add certifications extraction here
+            "achievements": [],  # Add achievements extraction here
             "word_count": word_count,
             "predicted_role": predicted_role,
             "job_fit": job_fit,
@@ -406,7 +278,7 @@ def home():
     return jsonify({"message": "Resume Analyzer API Running"}), 200
 
 # ---------------- Signup API ----------------
-@app.route('/api/signup', methods=['POST'])
+@app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     username = data.get("username")
@@ -460,4 +332,4 @@ def login():
 
 # ---------------- Run App ----------------
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
