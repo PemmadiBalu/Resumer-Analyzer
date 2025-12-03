@@ -14,12 +14,8 @@ function Signup() {
 
     try {
       const res = await axios.post(
-        "https://resumer-analyzer.onrender.com/signup", // correct backend route
-        {
-          username,
-          email,
-          password,
-        },
+        "https://resumer-analyzer.onrender.com/signup", // backend route
+        { username, email, password },
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
@@ -27,7 +23,7 @@ function Signup() {
       );
 
       if (res.data.success) {
-        setUser(username || email); // show username/email in main page
+        setUser(username || email); // display username/email
         setMessage("Signup successful!");
       } else {
         setMessage(res.data.message || "Signup failed");
