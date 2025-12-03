@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import axios from "axios";
 import "../styles/auth.css";
@@ -14,17 +13,24 @@ function Signup() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("https://resumer-analyzer.onrender.com/api/signup", {
-        username,
-        email,
-        password,
-      });
+      const res = await axios.post(
+        "https://resumer-analyzer.onrender.com/signup", // correct backend route
+        {
+          username,
+          email,
+          password,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
 
       if (res.data.success) {
         setUser(username || email); // show username/email in main page
         setMessage("Signup successful!");
       } else {
-        setMessage(res.data.message);
+        setMessage(res.data.message || "Signup failed");
       }
     } catch (err) {
       setMessage(err.response?.data?.message || "Signup failed");
