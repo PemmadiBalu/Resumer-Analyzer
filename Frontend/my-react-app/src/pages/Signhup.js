@@ -14,7 +14,7 @@ function Signup() {
 
     try {
       const res = await axios.post(
-        "https://resumer-analyzer.onrender.com/signup", // backend route
+        "https://resumer-analyzer.onrender.com/api/signup", // corrected backend route
         { username, email, password },
         {
           headers: { "Content-Type": "application/json" },
@@ -23,12 +23,13 @@ function Signup() {
       );
 
       if (res.data.success) {
-        setUser(username || email); // display username/email
+        setUser({ name: username, email });
         setMessage("Signup successful!");
       } else {
         setMessage(res.data.message || "Signup failed");
       }
     } catch (err) {
+      console.error(err);
       setMessage(err.response?.data?.message || "Signup failed");
     }
   };
@@ -74,7 +75,7 @@ function Signup() {
         </>
       ) : (
         <>
-          <h2>Welcome, {user}!</h2>
+          <h2>Welcome, {user.name}!</h2>
           <p>You are logged in to your AI Resume Scanner account.</p>
           <button onClick={handleLogout}>Logout</button>
         </>
