@@ -1,8 +1,10 @@
-{
-  "functions": {
-    "Backend/api/*.py": {
-      "runtime": "python3.12"
-    }
-  }
-}
-
+project/
+│
+├─ api/
+│  └─ app.py  (Flask backend)
+│
+├─ Frontend/
+│  └─ build/  (React build)
+│
+├─ requirements.txt
+└─ vercel.json
