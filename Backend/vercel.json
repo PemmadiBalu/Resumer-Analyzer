@@ -1,10 +1,10 @@
-project/
-│
-├─ api/
-│  └─ app.py  (Flask backend)
-│
-├─ Frontend/
-│  └─ build/  (React build)
-│
-├─ requirements.txt
-└─ vercel.json
+{
+  "functions": {
+    "api/*.py": {
+      "runtime": "python3.12"
+    }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/api/app.py" }
+  ]
+}
