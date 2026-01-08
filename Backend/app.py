@@ -7,8 +7,9 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import PyPDF2
-from docx import Document   # Correct import for python-docx
-
+from docx import Document
+import spacy
+from collections import Counter
 
 # ---------------- App Setup ----------------
 app = Flask(__name__)
@@ -60,6 +61,9 @@ def init_db():
 
 init_db()
 
+# ---------------- NLP Setup ----------------
+nlp = spacy.load("en_core_web_sm")
+
 # ---------------- Extractors ----------------
 def extract_text(path):
     if path.lower().endswith(".pdf"):
@@ -101,20 +105,13 @@ def extract_phone(text):
     return match.group(0) if match else None
 
 def extract_links(text):
-    # Match URLs even if they start with http/https or www or just linkedin/github
     urls = re.findall(r"(https?://[^\s]+|www\.[^\s]+|linkedin\.com[^\s]+|github\.com[^\s]+)", text, re.IGNORECASE)
-    
     github, linkedin, portfolios = None, None, []
 
     for url in urls:
-        # Clean trailing punctuation
         url = url.rstrip('.,;:()[]')
-        
-        # Add missing schema if needed
-        if url.startswith("www."):
-            url = "https://" + url
-        elif url.startswith("linkedin.com") or url.startswith("github.com"):
-            url = "https://" + url
+        if url.startswith("www.") or url.startswith("linkedin.com") or url.startswith("github.com"):
+            url = "https://" + url if not url.startswith("http") else url
 
         if "linkedin.com" in url.lower() and not linkedin:
             linkedin = url
@@ -126,37 +123,63 @@ def extract_links(text):
     portfolio = portfolios[0] if portfolios else None
     return github, linkedin, portfolio
 
+# ---------------- NLP-Based Extractors ----------------
+def extract_name_nlp(text):
+    doc = nlp(text)
+    for ent in doc.ents:
+        if ent.label_ == "PERSON":
+            return ent.text
+    return "Not Found"
 
-def portfolio_links(text):
-    _, _, portfolio = extract_links(text)
-    return portfolio if portfolio else "Not Found"
+def extract_skills_nlp(text):
+    predefined_skills = [
+        "python", "sql", "java", "c++", "machine learning", "deep learning",
+        "nlp", "flask", "django", "react", "javascript", "html", "css",
+        "pandas", "numpy", "tensorflow", "keras", "excel", "power bi", "tableau"
+    ]
+    doc = nlp(text.lower())
+    found_skills = set()
+    for token in doc:
+        if token.text in predefined_skills:
+            found_skills.add(token.text)
+    for chunk in doc.noun_chunks:
+        if chunk.text.lower() in predefined_skills:
+            found_skills.add(chunk.text.lower())
+    return list(found_skills)
+
+def extract_professional_summary_nlp(text):
+    doc = nlp(text)
+    sentences = [sent.text.strip() for sent in doc.sents]
+    return " ".join(sentences[:3]) if sentences else "Not Found"
+
+def extract_soft_skills(text):
+    soft_skills = [
+        "communication", "leadership", "teamwork",
+        "problem solving", "critical thinking",
+        "time management", "adaptability"
+    ]
+    text_lower = text.lower()
+    return [skill for skill in soft_skills if skill in text_lower]
+
+def ats_keyword_density(text):
+    doc = nlp(text.lower())
+    words = [token.text for token in doc if token.is_alpha]
+    freq = Counter(words)
+    common = freq.most_common(10)
+    return {word: count for word, count in common}
 
 # ---------------- Professional Summary ----------------
 def extract_Professional_Summary(text):
-    text_lower = text.lower()
-    keywords = ["professional summary", "summary", "profile", "career objective", "objective"]
-
-    for keyword in keywords:
-        if keyword in text_lower:
-            start = text_lower.find(keyword)
-            summary = text[start:].split("\n")
-            summary = " ".join(summary[1:6]) if len(summary) > 1 else text[:200]
-            return summary.strip()
-
-    sentences = re.split(r"(?<=[.!?]) +", text)
-    fallback_summary = " ".join(sentences[:3]).strip()
-    return fallback_summary if fallback_summary else None
+    return extract_professional_summary_nlp(text)
 
 # ---------------- Education ----------------
 def extract_education(text):
     education_entries = []
-
     degree_keywords = [
         r"B\.?Tech", r"B\.?E", r"M\.?Tech", r"BSc", r"MSc", r"BCA", r"MCA", r"PhD",
         r"Bachelor", r"Master", r"Intermediate", r"SSC", r"HSC", r"High School", r"Secondary School"
     ]
     degree_pattern = "|".join(degree_keywords)
-
     year_pattern = r"(20\d{2}–20\d{2}|20\d{2}|19\d{2})"
     cgpa_pattern = r"CGPA[:\s]?([\d\.]+)"
     institute_keywords = ["Institute", "College", "School", "University"]
@@ -165,63 +188,42 @@ def extract_education(text):
     idx = 0
     while idx < len(lines):
         line = lines[idx].strip()
-
-        # Combine multi-line degree description
         while idx + 1 < len(lines) and not re.search(degree_pattern, lines[idx + 1], re.IGNORECASE) and not any(k in lines[idx + 1] for k in institute_keywords):
             line += " " + lines[idx + 1].strip()
             idx += 1
-
         if re.search(degree_pattern, line, re.IGNORECASE):
             edu_entry = {}
             edu_entry["education"] = line
-
-            # Look at next line for institute, CGPA, year
             next_line = lines[idx + 1].strip() if idx + 1 < len(lines) else ""
-
-            # Split next_line on '|' or '-' to separate institute, CGPA, year
             parts = re.split(r"\||-", next_line)
             institute = parts[0].strip() if len(parts) > 0 else "Not Found"
-
             cgpa, year = "Not Found", "Not Found"
             if len(parts) > 1:
-                # Search for CGPA and year in the remaining part
                 cgpa_match = re.search(cgpa_pattern, parts[1], re.IGNORECASE)
                 year_match = re.search(year_pattern, parts[1])
                 cgpa = cgpa_match.group(1) if cgpa_match else "Not Found"
                 year = year_match.group(0) if year_match else "Not Found"
             else:
-                # fallback: try extracting CGPA and year from whole line
                 cgpa_match = re.search(cgpa_pattern, next_line, re.IGNORECASE)
                 year_match = re.search(year_pattern, next_line)
                 cgpa = cgpa_match.group(1) if cgpa_match else "Not Found"
                 year = year_match.group(0) if year_match else "Not Found"
-
             edu_entry["institution"] = institute
             edu_entry["cgpa"] = cgpa
             edu_entry["year"] = year
-
             education_entries.append(edu_entry)
             idx += 2
         else:
             idx += 1
-
     return education_entries or [{"education": "Not Found", "institution": "Not Found", "cgpa": "Not Found", "year": "Not Found"}]
 
-
-
 # ---------------- Skills & Job Fit ----------------
-def extract_skills(text):
-    skills_list = [
-        "python", "sql", "pandas", "numpy", "matplotlib", "seaborn", "tensorflow",
-        "keras", "flask", "django", "react", "javascript", "html", "css", "git",
-        "linux", "machine learning", "deep learning", "nlp", "excel", "power bi", "tableau"
-    ]
-    return [s for s in skills_list if s in text.lower()]
-
 def predict_role(text):
     roles_keywords = {
         "Data Scientist": ["machine learning", "data analysis", "pandas", "numpy", "tensorflow", "keras", "nlp"],
         "Data Analyst": ["excel", "tableau", "power bi", "sql", "pandas"],
+        "Frontend Developer": [ "html", "css", "javascript", "react", "angular", "vue"],
+        "Backend Developer": [ "python", "java", "C++", "flask", "django", "sql", "apis"],
         "Full Stack Developer": ["react", "flask", "django", "javascript", "html", "css"],
         "Backend Developer": ["flask", "django", "apis", "sql", "postgres", "mysql"],
         "Machine Learning Engineer": ["tensorflow", "keras", "pytorch", "deep learning"]
@@ -252,103 +254,70 @@ def calculate_ats_score(text, skills):
     length_score = 10 if 300 <= len(text.split()) <= 800 else 5 if 150 <= len(text.split()) < 300 else 0
     return round(skill_score + contact_score + structure_score + length_score, 2)
 
-# ---------------- Sections ----------------
+# ---------------- Sections (Projects, Internships, Certifications, Achievements) ----------------
 def extract_projects(text):
-    projects, lines = [], text.split("\n")
-    project_keywords = ["project", "projects"]
-    section_end_keywords = ["internship", "experience", "education", "certifications", "skills", "achievements", "summary", "profile"]
-    inside_section, current = False, []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-        if any(k in clean_line for k in project_keywords):
-            inside_section = True
-            continue
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current: projects.append(" ".join(current))
-            current, inside_section = [], False
-        if inside_section and clean_line: current.append(line.strip())
-    if current: projects.append(" ".join(current))
-    return [p for p in projects if len(p.split()) > 3] or []
+    projects = []
+    project_keywords = [
+        r"Project[s]?:", r"Notable Project[s]?", r"Key Project[s]?", r"Project[s]? Experience"
+    ]
+    project_pattern = "|".join(project_keywords)
+    sections = re.split(project_pattern, text, flags=re.IGNORECASE)
+    
+    for section in sections[1:]:
+        lines = section.split("\n")[:3]
+        project_text = " ".join(lines).strip()
+        if project_text:
+            projects.append(project_text)
+    
+    return projects if projects else ["Not Found"]
 
 def extract_internships(text):
-    internships, lines = [], text.split("\n")
-    internship_keywords = ["internship", "internships", "work experience", "experience"]
-    section_end_keywords = ["education", "projects", "certifications", "skills", "achievements", "summary", "profile", "objective"]
-    inside_section, current = False, []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-        if any(k in clean_line for k in internship_keywords): inside_section = True; continue
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current: internships.append(" ".join(current))
-            current, inside_section = [], False
-        if inside_section and clean_line: current.append(line.strip())
-    if current: internships.append(" ".join(current))
-    return [i for i in internships if len(i.split()) > 3] or []
+    internships = []
+    internship_keywords = [
+        r"Internship[s]?", r"Intern[s]?", r"Internship Experience"
+    ]
+    internship_pattern = "|".join(internship_keywords)
+    sections = re.split(internship_pattern, text, flags=re.IGNORECASE)
+    
+    for section in sections[1:]:
+        lines = section.split("\n")[:3]
+        internship_text = " ".join(lines).strip()
+        if internship_text:
+            internships.append(internship_text)
+    
+    return internships if internships else ["Not Found"]
 
 def extract_certifications(text):
     certifications = []
-    lines = text.split("\n")
-
-    # Keywords to detect certification lines
-    cert_keywords = ["certification", "certifications", "course", "courses", "training", "certificate"]
-    # Keywords that usually mark the end of a section
-    section_end_keywords = ["education", "projects", "internships", "skills", 
-                            "achievements", "summary", "experience", "profile", "objective"]
-
-    inside_section = False
-    current_cert = []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-
-        # Start capturing if line has cert keywords
-        if any(k in clean_line for k in cert_keywords):
-            inside_section = True
-            # Include the current line if it seems like a certification entry
-            if len(line.strip().split()) > 2:
-                current_cert.append(line.strip())
-            continue
-
-        # End section if end keyword found
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current_cert:
-                certifications.extend(current_cert)
-            current_cert = []
-            inside_section = False
-
-        # Collect lines if inside section
-        if inside_section:
-            if clean_line and len(clean_line.split()) > 2:
-                current_cert.append(line.strip())
-
-    # Add any remaining certifications
-    if current_cert:
-        certifications.extend(current_cert)
-
-    # Remove duplicates and very short lines
-    certifications = list(dict.fromkeys(certifications))  # preserves order
-    certifications = [c for c in certifications if len(c.split()) > 2]
-
-    return certifications or ["Not Found"]
-
+    cert_keywords = [
+        r"Certification[s]?", r"Certified", r"Certificate[s]?", r"Certification[s]? Experience"
+    ]
+    cert_pattern = "|".join(cert_keywords)
+    sections = re.split(cert_pattern, text, flags=re.IGNORECASE)
+    
+    for section in sections[1:]:
+        lines = section.split("\n")[:2]
+        cert_text = " ".join(lines).strip()
+        if cert_text:
+            certifications.append(cert_text)
+    
+    return certifications if certifications else ["Not Found"]
 
 def extract_achievements(text):
-    achievements, lines = [], text.split("\n")
-    ach_keywords = ["achievement", "achievements", "awards", "honors", "recognition"]
-    section_end_keywords = ["education", "projects", "internships", "skills", "certifications", "summary", "experience", "profile", "objective"]
-    inside_section, current = False, []
-
-    for line in lines:
-        clean_line = line.strip().lower()
-        if any(k in clean_line for k in ach_keywords): inside_section = True; continue
-        if inside_section and any(k in clean_line for k in section_end_keywords):
-            if current: achievements.append(" ".join(current))
-            current, inside_section = [], False
-        if inside_section and clean_line: current.append(line.strip())
-    if current: achievements.append(" ".join(current))
-    return [a for a in achievements if len(a.split()) > 3] or []
+    achievements = []
+    achievement_keywords = [
+        r"Achievement[s]?", r"Award[s]?", r"Recognition[s]?", r"Accomplishment[s]?"
+    ]
+    achievement_pattern = "|".join(achievement_keywords)
+    sections = re.split(achievement_pattern, text, flags=re.IGNORECASE)
+    
+    for section in sections[1:]:
+        lines = section.split("\n")[:2]
+        achievement_text = " ".join(lines).strip()
+        if achievement_text:
+            achievements.append(achievement_text)
+    
+    return achievements if achievements else ["Not Found"]
 
 # ---------------- Upload Route ----------------
 @app.route("/upload", methods=["POST"])
@@ -368,23 +337,27 @@ def upload_resume():
 
         text = extract_text(filepath) or ""
         word_count = len(text.split())
-        skills = extract_skills(text)
+        skills = extract_skills_nlp(text)
         ats_score = calculate_ats_score(text, skills)
         predicted_role = predict_role(text)
         job_fit = calculate_job_fit(text)
         github, linkedin, portfolio = extract_links(text)
-        professional_summary = extract_Professional_Summary(text)
+        professional_summary = extract_professional_summary_nlp(text)
+        name = extract_name_nlp(text)
+        soft_skills = extract_soft_skills(text)
+        keyword_density = ats_keyword_density(text)
 
         result = {
-            "name": "Not Found",
+            "name": name,
             "email": extract_email(text) or "Not Found",
             "phone": extract_phone(text) or "Not Found",
             "linkedin": linkedin or "Not Found",
             "github": github or "Not Found",
             "portfolio": portfolio or "Not Found",
-            "professional_summary": professional_summary or "Not Found",
+            "professional_summary": professional_summary,
             "education": extract_education(text),
             "technical_skills": skills,
+            "soft_skills": soft_skills,
             "projects": extract_projects(text),
             "internships": extract_internships(text),
             "certifications": extract_certifications(text),
@@ -393,7 +366,8 @@ def upload_resume():
             "predicted_role": predicted_role,
             "job_fit": job_fit,
             "ats_score": ats_score,
-            "summary": "Analysis Completed"
+            "keyword_density": keyword_density,
+            "summary": "NLP Resume Analysis Completed"
         }
         return jsonify(result), 200
 
