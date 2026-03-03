@@ -21,14 +21,14 @@ AI-Powered-Resume-Analyzer/
 - my-app/
 - src/
 components/
-  -Upload.js
-  -ResultCard.js
-  App.js
- index.js
- styles/
-  result.css
-  upload.css
- package.json
+ - Upload.js
+- ResultCard.js
+  - App.js
+  - index.js
+ - styles/
+  - result.css
+  - upload.css
+ - package.json
 
 🚀 Features
 
