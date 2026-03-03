@@ -12,23 +12,23 @@ Communication	REST API (Axios Fetch HTTP Requests)
 
 📁 Folder Structure
 AI-Powered-Resume-Analyzer/
-│
+
 ├─ Back-end/
-│   ├─ app.py
-│   ├─ requirements.txt
-│
+app.py
+requirements.txt
+
 ├─ Front-end/
-│   ├─ my-app/
-│   │   ├─ src/
-│   │   │   ├─ components/
-│   │   │   │   ├─ Upload.js
-│   │   │   │   └─ ResultCard.js
-│   │   │   ├─ App.js
-│   │   │   ├─ index.js
-│   │   │   └─ styles/
-│   │   │       ├─ result.css
-│   │   │       └─ upload.css
-│   │   └─ package.json
+  ├─ my-app/
+  ├─ src/
+    components/
+        Upload.js
+        ResultCard.js
+  App.js
+ index.js
+ styles/
+  ├─ result.css
+  └─ upload.css
+└─ package.json
 
 🚀 Features
 
