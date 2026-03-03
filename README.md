@@ -20,15 +20,15 @@ AI-Powered-Resume-Analyzer/
 # Front-end/
 - my-app/
 - src/
-components/
- - Upload.js
-- ResultCard.js
-  - App.js
-  - index.js
+    - components/
+         - Upload.js
+         - ResultCard.js
+- App.js
+- index.js
  - styles/
   - result.css
   - upload.css
- - package.json
+- package.json
 
 🚀 Features
 
