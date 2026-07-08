@@ -1,110 +1,266 @@
 
-/* ================================
-   MAIN RESULT CARD
-=================================== */
-.result-card {
-  background: #ffffff;
-  padding: 30px;
-  margin-top: 35px;
-  border-radius: 18px;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+
+/* ===============================
+   Animated Background
+================================= */
+
+body {
+  margin: 0;
   font-family: "Poppins", sans-serif;
-  animation: fadeIn 0.4s ease-in-out;
+  background: linear-gradient(-45deg, #667eea, #764ba2, #4facfe, #00f2fe);
+  background-size: 400% 400%;
+  animation: gradientBG 12s ease infinite;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ===============================
+   Result Card
+================================= */
+
+.result-card {
+  width: 90%;
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 35px;
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  border: 1px solid rgba(255,255,255,.25);
+
+  box-shadow: 0 20px 40px rgba(0,0,0,.2);
+
+  animation: fadeIn .8s ease;
 }
 
-.result-card h2 {
-  text-align: center;
-  font-size: 26px;
-  font-weight: 600;
-  color: #1d1d1d;
-  margin-bottom: 20px;
-  border-bottom: 3px solid #007bff;
-  padding-bottom: 8px;
+/* ===============================
+   Heading
+================================= */
+
+.result-card h2{
+    text-align:center;
+    color:#fff;
+    margin-bottom:25px;
+    font-size:34px;
 }
 
-/* ================================
-   SECTION STYLING
-=================================== */
-section {
-  background: #f8faff;
-  padding: 18px;
-  border-radius: 12px;
-  margin-bottom: 22px;
-  border-left: 4px solid #007bff;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.04);
+.result-card h3{
+    color:#fff;
+    margin-bottom:15px;
+    border-left:5px solid #00f2fe;
+    padding-left:10px;
 }
 
-section h3 {
-  font-size: 20px;
-  margin-bottom: 10px;
-  color: #004aad;
-  font-weight: 600;
+/* ===============================
+   Sections
+================================= */
+
+.result-card section{
+    background:rgba(255,255,255,.12);
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:20px;
+
+    transition:.4s;
+    animation:slideUp .8s ease;
 }
 
-section p,
-section li {
-  font-size: 15px;
-  color: #333;
-  line-height: 1.5;
+.result-card section:hover{
+    transform:translateY(-8px);
+    background:rgba(255,255,255,.22);
+    box-shadow:0 12px 30px rgba(0,0,0,.18);
 }
 
-/* ================================
-   LISTS
-=================================== */
-ul {
-  padding-left: 18px;
+/* ===============================
+   Text
+================================= */
+
+.result-card p,
+.result-card li{
+    color:#222;
+    line-height:1.8;
+    font-size:16px;
 }
 
-ul li {
-  margin-bottom: 8px;
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #e8e8e8;
-  transition: 0.3s;
+.result-card strong{
+    color:#000000;
 }
 
-ul li:hover {
-  background: #eef6ff;
-  border-color: #bcd7ff;
+.result-card ul{
+    padding-left:22px;
 }
 
-/* ================================
-   KEY-VALUE LAYOUT
-=================================== */
-section p strong {
-  color: #1b3a7a;
+/* ===============================
+   Links
+================================= */
+
+.result-card a{
+    color:#00f2fe;
+    text-decoration:none;
 }
 
-/* ================================
-   JOB FIT BOX
-=================================== */
-section ul li strong {
-  color: #007bff;
+.result-card a:hover{
+    text-decoration:underline;
 }
 
-/* ================================
-   RESPONSIVE DESIGN
-=================================== */
-@media (max-width: 600px) {
-  .result-card {
-    padding: 20px;
-  }
+/* ===============================
+   Scrollbar
+================================= */
 
-  section {
-    padding: 15px;
-  }
+::-webkit-scrollbar{
+    width:8px;
+}
 
-  .result-card h2 {
-    font-size: 22px;
-  }
+::-webkit-scrollbar-thumb{
+    background:#00c6ff;
+    border-radius:20px;
+}
 
-  section h3 {
-    font-size: 18px;
-  }
+/* ===============================
+   Animations
+================================= */
+
+@keyframes gradientBG{
+
+0%{
+background-position:0% 50%;
+}
+
+50%{
+background-position:100% 50%;
+}
+
+100%{
+background-position:0% 50%;
+}
+
+}
+
+@keyframes fadeIn{
+
+from{
+opacity:0;
+transform:scale(.95);
+}
+
+to{
+opacity:1;
+transform:scale(1);
+}
+
+}
+
+@keyframes slideUp{
+
+from{
+opacity:0;
+transform:translateY(40px);
+}
+
+to{
+opacity:1;
+transform:translateY(0);
+}
+
+}
+
+/* Floating Card */
+
+.result-card{
+    animation:
+        fadeIn .8s ease,
+        floating 4s ease-in-out infinite;
+}
+
+@keyframes floating{
+
+0%{
+transform:translateY(0);
+}
+
+50%{
+transform:translateY(-6px);
+}
+
+100%{
+transform:translateY(0);
+}
+
+}
+
+/* Fade each section one by one */
+
+.result-card section:nth-child(2){
+animation-delay:.2s;
+}
+
+.result-card section:nth-child(3){
+animation-delay:.4s;
+}
+
+.result-card section:nth-child(4){
+animation-delay:.6s;
+}
+
+.result-card section:nth-child(5){
+animation-delay:.8s;
+}
+
+.result-card section:nth-child(6){
+animation-delay:1s;
+}
+
+.result-card section:nth-child(7){
+animation-delay:1.2s;
+}
+
+.result-card section:nth-child(8){
+animation-delay:1.4s;
+}
+
+.result-card section:nth-child(9){
+animation-delay:1.6s;
+}
+
+.result-card section:nth-child(10){
+animation-delay:1.8s;
+}
+
+/* ===============================
+   Responsive
+================================= */
+
+@media(max-width:768px){
+
+.result-card{
+width:95%;
+padding:20px;
+}
+
+.result-card h2{
+font-size:28px;
+}
+
+.result-card h3{
+font-size:20px;
+}
+
+}
+
+@media(max-width:480px){
+
+.result-card{
+padding:15px;
+}
+
+.result-card h2{
+font-size:24px;
+}
+
+.result-card p,
+.result-card li{
+font-size:14px;
+}
+
 }
