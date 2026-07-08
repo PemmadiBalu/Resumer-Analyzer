@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import axios from "axios";
 import "../styles/auth.css";
@@ -8,30 +9,45 @@ function Login() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
+    setLoading(true);
+    setMessage("");
+
     try {
-      const res = await axios.post("http://127.0.0.1:5000/login", {
-        username: email, // backend expects `username`, using email field
-        password,
-      });
+      const res = await axios.post(
+        "http://127.0.0.1:5000/api/login",
+        {
+          email,
+          password,
+        }
+      );
 
       if (res.data.success) {
         setUser({
-          name: res.data.username || email,
+          username: res.data.username,
           email,
-          uploadedResumes: res.data.upload_count || 0,
-          skills: res.data.skills || [],
           lastLogin: new Date().toLocaleString(),
         });
-        setMessage("Login successful!");
+
+        setMessage(res.data.message || "Login successful!");
+
+        setEmail("");
+        setPassword("");
       } else {
-        setMessage(res.data.message);
+        setMessage(res.data.message || "Login failed");
       }
     } catch (err) {
-      setMessage(err.response?.data?.message || "Login failed");
+      setMessage(
+        err.response?.data?.message || "Invalid email or password."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,6 +63,7 @@ function Login() {
       {!user ? (
         <>
           <h2>Login</h2>
+
           <form className="auth-form" onSubmit={handleLogin}>
             <input
               type="email"
@@ -64,22 +81,34 @@ function Login() {
               required
             />
 
-            <button type="submit">Log in</button>
+            <button type="submit" disabled={loading}>
+              {loading ? "Logging In..." : "Login"}
+            </button>
           </form>
 
           {message && <p className="msg">{message}</p>}
         </>
       ) : (
         <>
-          <h2>Welcome, {user.name}!</h2>
-          <p>You are logged in to your AI Resume Scanner account.</p>
+          <h2>Welcome, {user.username}!</h2>
+
+          <p>You are logged in to your AI Resume Analyzer.</p>
 
           <div className="account-details">
             <h3>Account Details</h3>
+
             <ul>
-              <li><strong>Username:</strong> {user.name}</li>
-              <li><strong>Email:</strong> {user.email}</li>
-              <li><strong>Last Login:</strong> {user.lastLogin}</li>
+              <li>
+                <strong>Username:</strong> {user.username}
+              </li>
+
+              <li>
+                <strong>Email:</strong> {user.email}
+              </li>
+
+              <li>
+                <strong>Last Login:</strong> {user.lastLogin}
+              </li>
             </ul>
           </div>
 
