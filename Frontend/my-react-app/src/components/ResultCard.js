@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import "../styles/result.css";
 
@@ -8,121 +9,158 @@ function ResultCard({ data }) {
   }
 
   const {
-    name = "Not Found",
-    email = "Not Found",
-    phone = "Not Found",
-    linkedin = "Not Found",
-    github = "Not Found",
-    portfolio = "Not Found",
-    professional_summary = "Not Found",
+    name,
+    email,
+    phone,
+    links = {}, // links object from backend
+    professional_summary,
     education = [],
     technical_skills = [],
     projects = [],
     internships = [],
     certifications = [],
     achievements = [],
-    word_count = 0,
-    predicted_role = "N/A",
+    word_count,
+    predicted_role,
     job_fit = {},
-    ats_score = "N/A",
-    summary = "N/A"
+    ats_score,
+    status
   } = data;
+
+  const { linkedin, github, portfolio } = links;
 
   return (
     <div className="result-card">
       <h2>Resume Analysis Result</h2>
-      <p><strong>Status:</strong> {summary}</p>
+      <p><strong>Status:</strong> {status || "N/A"}</p>
 
       {/* Basic Info */}
       <section>
         <h3>Basic Information</h3>
-        <p><strong>Name:</strong> {name}</p>
-        <p><strong>Email:</strong> {email}</p>
-        <p><strong>Phone:</strong> {phone}</p>
-        <p><strong>LinkedIn:</strong> {linkedin}</p>
-        <p><strong>GitHub:</strong> {github}</p>
-        <p><strong>Portfolio Link:</strong> {portfolio}</p>
+        <p><strong>Name:</strong> {name || "N/A"}</p>
+        <p><strong>Email:</strong> {email || "N/A"}</p>
+        <p><strong>Phone:</strong> {phone || "N/A"}</p>
+        <p><strong>LinkedIn:</strong> {linkedin || "N/A"}</p>
+        <p><strong>GitHub:</strong> {github || "N/A"}</p>
+        <p><strong>Portfolio:</strong> {portfolio || "N/A"}</p>
       </section>
 
       {/* Professional Summary */}
       <section>
         <h3>Professional Summary</h3>
-        <p>{professional_summary}</p>
-      </section>
-
-      {/* Education */}
-      <section>
-        <h3>Education</h3>
-        {education.length > 0 ? (
-          <ul>
-            {education.map((edu, idx) => (
-              <li key={idx}>
-                <p><strong>Degree:</strong> {edu.education || "N/A"}</p>
-                <p><strong>Institution:</strong> {edu.institution || "N/A"}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Not Found</p>
-        )}
-      </section>
-
-      {/* Skills */}
-      <section>
-        <h3>Technical Skills</h3>
-        <p>{technical_skills.length > 0 ? technical_skills.join(", ") : "Not Found"}</p>
+        {professional_summary ? <p>{professional_summary}</p> : <p>No professional summary found.</p>}
       </section>
 
       {/* Projects */}
       <section>
         <h3>Projects</h3>
         {projects.length > 0 ? (
-          <ul>{projects.map((p, idx) => <li key={idx}>{p}</li>)}</ul>
-        ) : <p>Not Found</p>}
+          <ul>
+             {projects.map((project, idx) => {
+             const projectName = project.project_name || project;
+             const projectDesc = project.description || "";
+
+            return (
+              <li key={idx}>
+               <strong>{projectName}</strong>
+               {projectDesc && <p>{projectDesc}</p>}
+             </li>
+           );
+        })}
+          </ul>
+        ) : (
+          <p>No projects found.</p>
+        )}
+      </section>
+
+      {/* Education */}
+      <section>
+        <h3>Education</h3>
+          {education && education.length > 0 ? (
+            <ul> {education.map((edu, i) => ( 
+            <li key={i} style={{ marginBottom: "20px" }}> 
+            {edu.level && (
+              <p>
+                <strong>Degree:</strong> {edu.level}
+                </p>
+              )}
+              {edu.institution && (
+                <p> <strong>Institution:</strong> {edu.institution} </p>
+                )}
+                {edu.year && ( <p> <strong>Year:</strong> {edu.year} </p>
+              )}
+              {edu.score && (
+                <p> <strong>CGPA:</strong> {edu.score} </p>
+                )}
+                 </li>
+              ))}
+              </ul>
+              ) : (
+              <p>Education details not found.</p>
+             )}
+       </section>
+
+      {/* Technical Skills */}
+      <section>
+        <h3>Technical Skills</h3>
+        <p>{technical_skills.length > 0 ? technical_skills.join(", ") : "No skills found."}</p>
       </section>
 
       {/* Internships */}
       <section>
-        <h3>Internships</h3>
-        {internships.length > 0 ? (
-          <ul>{internships.map((i, idx) => <li key={idx}>{i}</li>)}</ul>
-        ) : <p>Not Found</p>}
-      </section>
+        <h3>Internships / Internship Experience</h3>
+        {internships && internships.length > 0 ? (
+          <ul>
+            {internships.map((intern, index) => (
+              <li key={index} style={{ marginBottom: "15px" }}>
+                <h4>{intern.role}</h4>
+                {intern.details && (
+                  <p>{intern.details}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+          ) : (
+           <p>No internships found.</p>
+          )}
+        </section>  
 
       {/* Certifications */}
       <section>
-        <h3>Certifications</h3>
-        {certifications.length > 0 ? (
-          <ul>{certifications.map((c, idx) => <li key={idx}>{c}</li>)}</ul>
-        ) : <p>Not Found</p>}
+         <h3>Certifications</h3>
+          {certifications.length > 0 ? (
+           <ul>{certifications.map((cert, i) => ( <li key={i}>{cert}</li>))} </ul>
+          ) : (
+            <p>No certifications found.</p>
+          )}
       </section>
 
       {/* Achievements */}
       <section>
         <h3>Achievements</h3>
         {achievements.length > 0 ? (
-          <ul>{achievements.map((a, idx) => <li key={idx}>{a}</li>)}</ul>
-        ) : <p>Not Found</p>}
+          <ul>{achievements.map((a, i) => <li key={i}>{a}</li>)}</ul>
+        ) : (
+          <p>No achievements found.</p>
+        )}
       </section>
 
-      {/* Misc */}
+      {/* Additional Info */}
       <section>
         <h3>Additional Info</h3>
-        <p><strong>Word Count:</strong> {word_count}</p>
-        <p><strong>Predicted Role:</strong> {predicted_role}</p>
-        <p><strong>ATS Score:</strong> {ats_score}/100</p>
+        <p>Word Count: {word_count || "N/A"}</p>
+        <p>Predicted Role: {predicted_role || "N/A"}</p>
+        <p>ATS Score: {ats_score !== undefined ? `${ats_score}/100` : "N/A"}</p>
       </section>
 
       {/* Job Fit */}
       <section>
         <h3>Job Fit</h3>
         {Object.keys(job_fit).length > 0 ? (
-          <ul>
-            {Object.keys(job_fit).map((job, idx) => (
-              <li key={idx}><strong>{job}:</strong> {job_fit[job]}</li>
-            ))}
-          </ul>
-        ) : <p>No Job Fit Data</p>}
+          <ul>{Object.entries(job_fit).map(([k, v]) => <li key={k}>{k}: {v}</li>)}</ul>
+        ) : (
+          <p>No job fit data available.</p>
+        )}
       </section>
     </div>
   );
