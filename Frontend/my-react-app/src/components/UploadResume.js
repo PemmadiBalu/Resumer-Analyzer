@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import axios from "axios";
 import ResultCard from "./ResultCard";
@@ -6,6 +7,7 @@ import "../styles/upload.css";
 
 function UploadResume() {
   const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState("No file chosen");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -16,17 +18,18 @@ function UploadResume() {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+
     setFile(selectedFile);
     setResult(null);
     setError("");
-
-    if (selectedFile) {
-      document.getElementById("fileName").textContent = selectedFile.name;
-    }
+    setFileName(selectedFile ? selectedFile.name : "No file chosen");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    console.log("Submit clicked");
+    console.log("File:", file);
 
     if (!file) {
       setError("Please select a file to upload.");
@@ -34,19 +37,29 @@ function UploadResume() {
     }
 
     const formData = new FormData();
-    // Backend expects the key "file"
     formData.append("file", file);
-    formData.append("email", "test@gmail.com");
 
     setLoading(true);
     setError("");
 
     try {
-      const res = await axios.post("https://resumer-analyzer.onrender.com/upload", formData);
+      const res = await axios.post(
+        "http://127.0.0.1:5000/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
       setResult(res.data);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || "Failed to process the resume. Try again.");
+      setError(
+        err.response?.data?.error ||
+          "Failed to process the resume. Try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -73,7 +86,6 @@ function UploadResume() {
       </div>
 
       <form className="upload-form" onSubmit={handleSubmit}>
-        {/* Custom File Input */}
         <div className="custom-file-box">
           <input
             type="file"
@@ -82,10 +94,12 @@ function UploadResume() {
             onChange={handleFileChange}
             hidden
           />
+
           <label htmlFor="fileUpload" className="file-label">
             Select a Resume File
           </label>
-          <span id="fileName">No file chosen</span>
+
+          <span>{fileName}</span>
         </div>
 
         <button
@@ -114,14 +128,17 @@ function UploadResume() {
               className="feedback-slider"
               onChange={(e) => setRating(Number(e.target.value))}
             />
-            <p className="slider-value">Your Rating: {rating} / 5</p>
+
+            <p className="slider-value">
+              Your Rating: {rating} / 5
+            </p>
 
             <textarea
               className="feedback-input"
               placeholder="Write your feedback here..."
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
-            ></textarea>
+            />
 
             <button
               type="button"
