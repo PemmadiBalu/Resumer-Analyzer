@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import axios from "axios";
 import "../styles/auth.css";
@@ -8,26 +9,42 @@ function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [user, setUser] = useState(null); // store logged-in user
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
+    setLoading(true);
+    setMessage("");
+
     try {
-      const res = await axios.post("http://127.0.0.1:5000/api/signup", {
-        username,
-        email,
-        password,
-      });
+      const res = await axios.post(
+        "http://127.0.0.1:5000/api/signup",
+        {
+          username,
+          email,
+          password,
+        }
+      );
 
       if (res.data.success) {
-        setUser(username || email); // show username/email in main page
-        setMessage("Signup successful!");
-      } else {
+        setUser(username);
         setMessage(res.data.message);
+
+        // Clear form
+        setUsername("");
+        setEmail("");
+        setPassword("");
       }
     } catch (err) {
-      setMessage(err.response?.data?.message || "Signup failed");
+      setMessage(
+        err.response?.data?.message || "Signup failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,6 +61,7 @@ function Signup() {
       {!user ? (
         <>
           <h2>Sign Up</h2>
+
           <form className="auth-form" onSubmit={handleSignup}>
             <input
               type="text"
@@ -52,6 +70,7 @@ function Signup() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
+
             <input
               type="email"
               placeholder="Enter Email"
@@ -59,21 +78,27 @@ function Signup() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+
             <input
               type="password"
-              placeholder="Enter Password (min 6 chars)"
+              placeholder="Enter Password (Minimum 6 characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
               required
             />
-            <button type="submit">Sign Up</button>
+
+            <button type="submit" disabled={loading}>
+              {loading ? "Signing Up..." : "Sign Up"}
+            </button>
           </form>
+
           {message && <p className="msg">{message}</p>}
         </>
       ) : (
         <>
           <h2>Welcome, {user}!</h2>
-          <p>You are logged in to your AI Resume Scanner account.</p>
+          <p>Your account has been created successfully.</p>
           <button onClick={handleLogout}>Logout</button>
         </>
       )}
